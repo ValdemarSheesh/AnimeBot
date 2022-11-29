@@ -8,15 +8,15 @@ import java.net.http.HttpResponse;
 
 public class JSONLoader {
 
-    public static String getJSON() throws IOException, InterruptedException {
-        HttpClient httpClient = HttpClient.newBuilder().build();
+        public static String getJSON (String url) throws IOException, InterruptedException {
+            HttpClient httpClient = HttpClient.newBuilder().build();
 
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-                .GET()
-                .uri(URI.create("https://animechan.vercel.app/api/random"))
-                .build();
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(url))
+                    .build();
 
-        HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        return response.body();
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            return response.body();
     }
 }
