@@ -31,10 +31,10 @@ import java.util.List;
 @Component
 public class TelegramBot extends TelegramWebhookBot {
 
-
     final BotConfig config;
     final String URL_ANIMECHAN = "https://animechan.vercel.app/api/random";
     final String URL_WAIFU = "https://api.waifu.pics/sfw/%s";
+    final String URL_SET_WEBHOOK = "https://api.telegram.org/bot%s/setWebhook?url=%s";
     final List<String> categoryWaifu = List.of("waifu", "megumin", "dance", "kick", "cry", "blush", "kiss", "cuddle", "hug", "pat", "bonk", "smile", "nom", "happy", "wink");
 
     public TelegramBot(BotConfig config) {
@@ -46,6 +46,18 @@ public class TelegramBot extends TelegramWebhookBot {
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
+
+        try {
+            JSONLoader.getJSON(String.format(URL_SET_WEBHOOK, config.getToken(), config.getWebHookPath()));
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+//        try {
+//            setWebhook(SetWebhook.builder().url().build());
+//        } catch (TelegramApiException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     @Override
@@ -139,7 +151,7 @@ public class TelegramBot extends TelegramWebhookBot {
 
     private void sendQuote(long chatId) {
         Gson gson = new Gson();
-        Animechan animechan = null;
+        Animechan animechan;
         try {
             animechan = gson.fromJson(JSONLoader.getJSON(URL_ANIMECHAN), Animechan.class);
         } catch (IOException | InterruptedException e) {
