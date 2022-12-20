@@ -3,10 +3,13 @@ package com.example.animebot.service;
 import com.example.animebot.model.Animechan;
 import com.example.animebot.client.JSONLoader;
 import com.example.animebot.config.BotConfig;
+import com.example.animebot.model.User;
+import com.example.animebot.model.UserRepository;
 import com.google.gson.Gson;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -15,6 +18,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
@@ -32,6 +36,8 @@ import java.util.Map;
 @Component
 public class TelegramBot extends TelegramWebhookBot {
 
+    @Autowired
+    private UserRepository userRepository;
     final BotConfig config;
     final String URL_ANIMECHAN = "https://animechan.vercel.app/api/random";
     final String URL_WAIFU = "https://api.waifu.pics/sfw/%s";
@@ -85,25 +91,19 @@ public class TelegramBot extends TelegramWebhookBot {
             String messageText = update.getMessage().getText();
 
             switch (messageText) {
-                case "/check":
-                    break;
-                case "/start":
+                case "/start" -> {
+                    registerUser(update.getMessage());
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
-                    break;
-                case "Получить цитату из аниме":
-                    sendQuote(chatId);
-                    break;
-                case "Получить вайфу/гиф 1 сервис (16+)":
-                    sendCategoryWaifu(chatId);
-                    break;
-                case "Получить вайфу/гиф 2 сервис (16+)":
-                    sendCategoryKyoko(chatId);
-                    break;
-                default:
+                }
+                case "Получить цитату из аниме" -> sendQuote(chatId);
+                case "Получить вайфу/гиф 1 сервис (16+)" -> sendCategoryWaifu(chatId);
+                case "Получить вайфу/гиф 2 сервис (16+)" -> sendCategoryKyoko(chatId);
+                default -> {
                     if (categoryWaifu.contains(messageText))
                         sendImageWaifu(chatId, messageText);
                     if (categoryKyoko.containsKey(messageText))
                         sendImageKyoko(chatId, categoryKyoko.get(messageText));
+                }
             }
         }
         return null;
@@ -155,6 +155,23 @@ public class TelegramBot extends TelegramWebhookBot {
         SendMessage message = new SendMessage(String.valueOf(chatId), "Выбери категорию");
         message.setReplyMarkup(getKeyboardCategoryWaifu());
         executeMessage(message);
+    }
+
+    private void registerUser(Message message) {
+        if (userRepository.findById(message.getChatId()).isEmpty()) {
+            var chatId = message.getChatId();
+            var chat = message.getChat();
+
+            User user = new User();
+
+            user.setChatId(chatId);
+            user.setFirsName(chat.getFirstName());
+            user.setLastName(chat.getLastName());
+            user.setUserName(chat.getUserName());
+
+            userRepository.save(user);
+            log.info("user: " + user);
+        }
     }
 
     private ReplyKeyboard getKeyboardCategoryWaifu() {
