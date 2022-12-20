@@ -26,6 +26,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -34,8 +35,10 @@ public class TelegramBot extends TelegramWebhookBot {
     final BotConfig config;
     final String URL_ANIMECHAN = "https://animechan.vercel.app/api/random";
     final String URL_WAIFU = "https://api.waifu.pics/sfw/%s";
+    final String URL_KYOKO = "https://kyoko.rei.my.id/api/%s.php";
     final String URL_SET_WEBHOOK = "https://api.telegram.org/bot%s/setWebhook?url=%s";
     final List<String> categoryWaifu = List.of("waifu", "megumin", "dance", "kick", "cry", "blush", "kiss", "cuddle", "hug", "pat", "bonk", "smile", "nom", "happy", "wink");
+    final Map<String, String> categoryKyoko = Map.of("вайфу", "sfw", "смущение", "blush", "бонк", "bonk", "объятие", "hug", "пощечина", "slap", "улыбка", "smile", "подмигивание", "wink", "самодовольный", "smug", "помахать", "wave");
 
     public TelegramBot(BotConfig config) {
         this.config = config;
@@ -90,17 +93,23 @@ public class TelegramBot extends TelegramWebhookBot {
                 case "Получить цитату из аниме":
                     sendQuote(chatId);
                     break;
-                case "Получить вайфу (image)":
-                    sendCategory(chatId);
+                case "Получить вайфу/гиф 1 сервис (16+)":
+                    sendCategoryWaifu(chatId);
+                    break;
+                case "Получить вайфу/гиф 2 сервис (16+)":
+                    sendCategoryKyoko(chatId);
+                    break;
                 default:
                     if (categoryWaifu.contains(messageText))
-                        sendImage(chatId, messageText);
+                        sendImageWaifu(chatId, messageText);
+                    if (categoryKyoko.containsKey(messageText))
+                        sendImageKyoko(chatId, categoryKyoko.get(messageText));
             }
         }
         return null;
     }
 
-    private void sendImage(long chatId, String messageText) {
+    private void sendImageWaifu(long chatId, String messageText) {
         String jsonStr;
         try {
             jsonStr = JSONLoader.getJSON(String.format(URL_WAIFU, messageText));
@@ -110,6 +119,23 @@ public class TelegramBot extends TelegramWebhookBot {
         JSONObject jsonObject = new JSONObject(jsonStr);
         InputFile file = new InputFile();
         String url = jsonObject.getString("url");
+        sendImage(chatId, file, url);
+    }
+
+    private void sendImageKyoko(long chatId, String messageText) {
+        String jsonStr;
+        try {
+            jsonStr = JSONLoader.getJSON(String.format(URL_KYOKO, messageText));
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        JSONObject jsonObject = new JSONObject(jsonStr);
+        InputFile file = new InputFile();
+        String url = jsonObject.getJSONObject("apiResult").getJSONArray("url").get(0).toString();
+        sendImage(chatId, file, url);
+    }
+
+    private void sendImage(long chatId, InputFile file, String url) {
         file.setMedia(url);
 
         if (url.matches("\\S+.gif")) {
@@ -125,7 +151,7 @@ public class TelegramBot extends TelegramWebhookBot {
         }
     }
 
-    private void sendCategory(long chatId) {
+    private void sendCategoryWaifu(long chatId) {
         SendMessage message = new SendMessage(String.valueOf(chatId), "Выбери категорию");
         message.setReplyMarkup(getKeyboardCategoryWaifu());
         executeMessage(message);
@@ -138,6 +164,30 @@ public class TelegramBot extends TelegramWebhookBot {
 
         for (String category : categoryWaifu) {
             if (row.size() > 4) {
+                keyboardRows.add(row);
+                row = new KeyboardRow();
+            }
+            row.add(category);
+        }
+        keyboardRows.add(row);
+
+        keyboardMarkup.setKeyboard(keyboardRows);
+        return keyboardMarkup;
+    }
+
+    private void sendCategoryKyoko(long chatId) {
+        SendMessage message = new SendMessage(String.valueOf(chatId), "Выбери категорию");
+        message.setReplyMarkup(getKeyboardCategoryKyoko());
+        executeMessage(message);
+    }
+
+    private ReplyKeyboard getKeyboardCategoryKyoko() {
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+
+        for (String category : categoryKyoko.keySet()) {
+            if (row.size() > 2) {
                 keyboardRows.add(row);
                 row = new KeyboardRow();
             }
@@ -169,7 +219,11 @@ public class TelegramBot extends TelegramWebhookBot {
         keyboardRows.add(row);
 
         row = new KeyboardRow();
-        row.add("Получить вайфу (image)");
+        row.add("Получить вайфу/гиф 1 сервис (16+)");
+        keyboardRows.add(row);
+
+        row = new KeyboardRow();
+        row.add("Получить вайфу/гиф 2 сервис (16+)");
         keyboardRows.add(row);
 
         keyboardMarkup.setKeyboard(keyboardRows);
