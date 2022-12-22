@@ -7,7 +7,7 @@ import com.example.animebot.model.User;
 import com.example.animebot.model.UserRepository;
 import com.google.gson.Gson;
 import com.vdurmont.emoji.EmojiParser;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
+@Log4j2
 @Component
 public class TelegramBot extends TelegramWebhookBot {
 
@@ -53,13 +53,14 @@ public class TelegramBot extends TelegramWebhookBot {
         try {
             this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            log.error("Error setting bot`s command list: " + e.getMessage());
         }
+
 
         try {
             JSONLoader.getJSON(String.format(URL_SET_WEBHOOK, config.getToken(), config.getWebHookPath()));
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            log.error("Error set webHook: " + e.getMessage());
         }
 
 //        try {
@@ -110,11 +111,11 @@ public class TelegramBot extends TelegramWebhookBot {
     }
 
     private void sendImageWaifu(long chatId, String messageText) {
-        String jsonStr;
+        String jsonStr = null;
         try {
             jsonStr = JSONLoader.getJSON(String.format(URL_WAIFU, messageText));
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            log.error(String.format("Error url Waifu (%s): %s", URL_WAIFU, e.getMessage()));
         }
         JSONObject jsonObject = new JSONObject(jsonStr);
         InputFile file = new InputFile();
@@ -123,11 +124,11 @@ public class TelegramBot extends TelegramWebhookBot {
     }
 
     private void sendImageKyoko(long chatId, String messageText) {
-        String jsonStr;
+        String jsonStr = null;
         try {
             jsonStr = JSONLoader.getJSON(String.format(URL_KYOKO, messageText));
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            log.error(String.format("Error url Kyoko (%s): %s", URL_KYOKO, e.getMessage()));
         }
         JSONObject jsonObject = new JSONObject(jsonStr);
         InputFile file = new InputFile();
@@ -154,6 +155,12 @@ public class TelegramBot extends TelegramWebhookBot {
     private void sendCategoryWaifu(long chatId) {
         SendMessage message = new SendMessage(String.valueOf(chatId), "Выбери категорию");
         message.setReplyMarkup(getKeyboardCategoryWaifu());
+        executeMessage(message);
+    }
+
+    private void sendCategoryKyoko(long chatId) {
+        SendMessage message = new SendMessage(String.valueOf(chatId), "Выбери категорию");
+        message.setReplyMarkup(getKeyboardCategoryKyoko());
         executeMessage(message);
     }
 
@@ -192,12 +199,6 @@ public class TelegramBot extends TelegramWebhookBot {
         return keyboardMarkup;
     }
 
-    private void sendCategoryKyoko(long chatId) {
-        SendMessage message = new SendMessage(String.valueOf(chatId), "Выбери категорию");
-        message.setReplyMarkup(getKeyboardCategoryKyoko());
-        executeMessage(message);
-    }
-
     private ReplyKeyboard getKeyboardCategoryKyoko() {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         List<KeyboardRow> keyboardRows = new ArrayList<>();
@@ -218,11 +219,11 @@ public class TelegramBot extends TelegramWebhookBot {
 
     private void sendQuote(long chatId) {
         Gson gson = new Gson();
-        Animechan animechan;
+        Animechan animechan = null;
         try {
             animechan = gson.fromJson(JSONLoader.getJSON(URL_ANIMECHAN), Animechan.class);
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            log.error(String.format("Error url Animechan (%s): %s", URL_ANIMECHAN, e.getMessage()));
         }
         executeMessage(new SendMessage(String.valueOf(chatId), animechan.toString()));
     }
@@ -259,7 +260,7 @@ public class TelegramBot extends TelegramWebhookBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            log.error("Error occurred send message: " + e.getMessage());
         }
     }
 
@@ -267,7 +268,7 @@ public class TelegramBot extends TelegramWebhookBot {
         try {
             execute(photo);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            log.error("Error occurred send photo: " + e.getMessage());
         }
     }
 
@@ -275,7 +276,7 @@ public class TelegramBot extends TelegramWebhookBot {
         try {
             execute(animation);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            log.error("Error occurred send animation: " + e.getMessage());
         }
     }
 }
