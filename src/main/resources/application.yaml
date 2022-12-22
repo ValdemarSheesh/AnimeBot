@@ -1,7 +1,7 @@
 server:
   port: 8000
 
-webHookPath: https://2968-89-109-48-77.eu.ngrok.io
+webHookPath: https://c350-89-109-48-77.eu.ngrok.io
 
 bot:
   name: anime_nyaa_bot
@@ -18,5 +18,5 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/animebot
     username: root
-    password: 15v09o19v99a
+    password: ${MySQL_password}
     driver-class-name: com.mysql.cj.jdbc.Driver

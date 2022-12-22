@@ -13,77 +13,91 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>AnimeBot</name>
     <description>AnimeBot</description>
+
     <properties>
         <java.version>19</java.version>
+        <spring-boot-starter.version>3.0.0</spring-boot-starter.version>
+        <telegrambots.version>6.1.0</telegrambots.version>
+        <mysql-connector-java.version>8.0.31</mysql-connector-java.version>
+        <emoji-java.version>5.1.1</emoji-java.version>
+        <lombok.version>1.18.24</lombok.version>
+        <spring-boot-starter-data-jpa.version>2.7.6</spring-boot-starter-data-jpa.version>
+        <spring-boot-starter-test.version>3.0.0</spring-boot-starter-test.version>
+        <spring-boot-test.version>3.0.0</spring-boot-test.version>
+        <spring-boot-starter-web.version>3.0.0</spring-boot-starter-web.version>
+        <log4j-slf4j-impl.version>2.19.0</log4j-slf4j-impl.version>
+        <gson.version>2.10</gson.version>
     </properties>
+
     <dependencies>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-            <version>3.0.0</version>
+            <version>${spring-boot-starter.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots</artifactId>
-            <version>6.1.0</version>
+            <version>${telegrambots.version}</version>
         </dependency>
 
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.31</version>
+            <version>${mysql-connector-java.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.vdurmont</groupId>
             <artifactId>emoji-java</artifactId>
-            <version>5.1.1</version>
+            <version>${emoji-java.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>${lombok.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
-            <version>2.7.6</version>
+            <version>${spring-boot-starter-data-jpa.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>3.0.0</version>
+            <version>${spring-boot-starter-test.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
-            <version>3.0.0</version>
+            <version>${spring-boot-test.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>3.0.0</version>
+            <version>${spring-boot-starter-web.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.19.0</version>
+            <version>${log4j-slf4j-impl.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.10</version>
+            <version>${gson.version}</version>
         </dependency>
 
     </dependencies>
