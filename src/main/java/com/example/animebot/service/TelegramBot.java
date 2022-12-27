@@ -43,8 +43,8 @@ public class TelegramBot extends TelegramWebhookBot {
     final String URL_WAIFU = "https://api.waifu.pics/sfw/%s";
     final String URL_KYOKO = "https://kyoko.rei.my.id/api/%s.php";
     final String URL_SET_WEBHOOK = "https://api.telegram.org/bot%s/setWebhook?url=%s";
-    final List<String> categoryWaifu = List.of("waifu", "megumin", "dance", "kick", "cry", "blush", "kiss", "cuddle", "hug", "pat", "bonk", "smile", "nom", "happy", "wink");
-    final Map<String, String> categoryKyoko = Map.of("вайфу", "sfw", "смущение", "blush", "бонк", "bonk", "объятие", "hug", "пощечина", "slap", "улыбка", "smile", "подмигивание", "wink", "самодовольный", "smug", "помахать", "wave");
+    final List<String> categoryWaifu = List.of("waifu", "megumin", "dance", "kick", "cry", "blush", "kiss", "cuddle", "hug", "pat", "bonk", "smile", "nom", "happy");
+    final Map<String, String> categoryKyoko = Map.of("вайфу", "sfw", "смущение", "blush", "бонк", "bonk", "объятие", "hug", "пощечина", "slap", "улыбка", "smile", "подмигивание", "wink", "помахать", "wave");
 
     public TelegramBot(BotConfig config) {
         this.config = config;
@@ -96,6 +96,7 @@ public class TelegramBot extends TelegramWebhookBot {
                     registerUser(update.getMessage());
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
                 }
+                case "/back" -> sendStartKeyBoard(chatId);
                 case "Получить цитату из аниме" -> sendQuote(chatId);
                 case "Получить вайфу/гиф 1 сервис (16+)" -> sendCategoryWaifu(chatId);
                 case "Получить вайфу/гиф 2 сервис (16+)" -> sendCategoryKyoko(chatId);
@@ -110,30 +111,41 @@ public class TelegramBot extends TelegramWebhookBot {
         return null;
     }
 
+    private void sendStartKeyBoard(long chatId) {
+        String useButtons = "Воспользуйся кнопками ниже)";
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(useButtons);
+        message.setReplyMarkup(getKeyboardStart());
+        executeMessage(message);
+    }
+
     private void sendImageWaifu(long chatId, String messageText) {
-        String jsonStr = null;
+        String jsonStr;
         try {
             jsonStr = JSONLoader.getJSON(String.format(URL_WAIFU, messageText));
-        } catch (IOException | InterruptedException e) {
+            JSONObject jsonObject = new JSONObject(jsonStr);
+            InputFile file = new InputFile();
+            String url = jsonObject.getString("url");
+            sendImage(chatId, file, url);
+        } catch (Exception e) {
+            sendMessServiceUnavailable(chatId);
             log.error(String.format("Error url Waifu (%s): %s", URL_WAIFU, e.getMessage()));
         }
-        JSONObject jsonObject = new JSONObject(jsonStr);
-        InputFile file = new InputFile();
-        String url = jsonObject.getString("url");
-        sendImage(chatId, file, url);
     }
 
     private void sendImageKyoko(long chatId, String messageText) {
-        String jsonStr = null;
+        String jsonStr;
         try {
             jsonStr = JSONLoader.getJSON(String.format(URL_KYOKO, messageText));
-        } catch (IOException | InterruptedException e) {
+            JSONObject jsonObject = new JSONObject(jsonStr);
+            InputFile file = new InputFile();
+            String url = jsonObject.getJSONObject("apiResult").getJSONArray("url").get(0).toString();
+            sendImage(chatId, file, url);
+        } catch (Exception e) {
+            sendMessServiceUnavailable(chatId);
             log.error(String.format("Error url Kyoko (%s): %s", URL_KYOKO, e.getMessage()));
         }
-        JSONObject jsonObject = new JSONObject(jsonStr);
-        InputFile file = new InputFile();
-        String url = jsonObject.getJSONObject("apiResult").getJSONArray("url").get(0).toString();
-        sendImage(chatId, file, url);
     }
 
     private void sendImage(long chatId, InputFile file, String url) {
@@ -193,6 +205,7 @@ public class TelegramBot extends TelegramWebhookBot {
             }
             row.add(category);
         }
+        row.add(EmojiParser.parseToUnicode("/back"));
         keyboardRows.add(row);
 
         keyboardMarkup.setKeyboard(keyboardRows);
@@ -211,6 +224,7 @@ public class TelegramBot extends TelegramWebhookBot {
             }
             row.add(category);
         }
+        row.add(EmojiParser.parseToUnicode("/back"));
         keyboardRows.add(row);
 
         keyboardMarkup.setKeyboard(keyboardRows);
@@ -219,13 +233,14 @@ public class TelegramBot extends TelegramWebhookBot {
 
     private void sendQuote(long chatId) {
         Gson gson = new Gson();
-        Animechan animechan = null;
+        Animechan animechan;
         try {
             animechan = gson.fromJson(JSONLoader.getJSON(URL_ANIMECHAN), Animechan.class);
-        } catch (IOException | InterruptedException e) {
+            executeMessage(new SendMessage(String.valueOf(chatId), animechan.toString()));
+        } catch (Exception e) {
+            sendMessServiceUnavailable(chatId);
             log.error(String.format("Error url Animechan (%s): %s", URL_ANIMECHAN, e.getMessage()));
         }
-        executeMessage(new SendMessage(String.valueOf(chatId), animechan.toString()));
     }
 
     private ReplyKeyboardMarkup getKeyboardStart() {
@@ -278,6 +293,12 @@ public class TelegramBot extends TelegramWebhookBot {
         } catch (TelegramApiException e) {
             log.error("Error occurred send animation: " + e.getMessage());
         }
+    }
+
+    private void sendMessServiceUnavailable(long chatId) {
+        String warning = EmojiParser.parseToUnicode("Сервис временно недоступен :cry:");
+        SendMessage message = new SendMessage(String.valueOf(chatId), warning);
+        executeMessage(message);
     }
 }
 
